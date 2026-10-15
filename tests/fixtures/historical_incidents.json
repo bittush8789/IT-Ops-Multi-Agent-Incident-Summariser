@@ -1,0 +1,28 @@
+[
+  {
+    "source_incident_key": "INC-2025-0819",
+    "title": "Auth Service PostgreSQL Connection Pool Exhaustion",
+    "service_name": "auth-service",
+    "content": "Authentication service experienced HTTP 504 timeouts after an aggressive reduction in client connection timeout settings during peak morning login traffic. Worker pods saturated database pool slots, causing cascading timeout errors across all dependant services.",
+    "resolution": "Reverted connection pool timeout threshold from 3s back to 45s. Implemented PgBouncer connection multiplexer in front of PostgreSQL database cluster to cushion connection burst spikes.",
+    "metadata": {
+      "severity": "CRITICAL",
+      "resolution_time_minutes": 24,
+      "service_name": "auth-service",
+      "contributing_factor": "misconfigured_timeout_threshold"
+    }
+  },
+  {
+    "source_incident_key": "INC-2025-1104",
+    "title": "Order Processing Checkout Timeout Surge",
+    "service_name": "checkout-api",
+    "content": "Checkout service degraded with HTTP 500 and 504 errors following simultaneous replica scaling and pool timeout adjustments. Database max_connections threshold reached.",
+    "resolution": "Increased max_connections in PostgreSQL and added client-side circuit breakers with exponential backoff on connection retry attempts.",
+    "metadata": {
+      "severity": "HIGH",
+      "resolution_time_minutes": 42,
+      "service_name": "checkout-api",
+      "contributing_factor": "max_connections_exceeded"
+    }
+  }
+]

@@ -1,0 +1,45 @@
+[
+  {
+    "commit_id": "8f92bd3",
+    "author": "alex.dev@corp.internal",
+    "message": "fix(pool): reduce default db pool timeout from 60s to 5s to fail faster",
+    "timestamp": "2026-10-15T10:01:10Z",
+    "repository": "enterprise-org/payment-gateway",
+    "files_changed": [
+      "config/database.yaml",
+      "src/connection_pool.py"
+    ],
+    "deployment_env": "production",
+    "deployment_status": "SUCCESS",
+    "relation_to_incident": "PRE_INCIDENT",
+    "evidence_reference": "git://enterprise-org/payment-gateway/commit/8f92bd3"
+  },
+  {
+    "commit_id": "4b71ae9",
+    "author": "sarah.infra@corp.internal",
+    "message": "chore(k8s): bump replica count to 12 in deployment manifest for high throughput",
+    "timestamp": "2026-10-15T10:04:00Z",
+    "repository": "enterprise-org/payment-gateway",
+    "files_changed": [
+      "k8s/deployment.yaml"
+    ],
+    "deployment_env": "production",
+    "deployment_status": "SUCCESS",
+    "relation_to_incident": "PRE_INCIDENT",
+    "evidence_reference": "git://enterprise-org/payment-gateway/commit/4b71ae9"
+  },
+  {
+    "commit_id": "2d15c77",
+    "author": "oncall.sre@corp.internal",
+    "message": "revert(pool): rollback pool timeout to 60s and throttle ingress traffic",
+    "timestamp": "2026-10-15T10:25:00Z",
+    "repository": "enterprise-org/payment-gateway",
+    "files_changed": [
+      "config/database.yaml"
+    ],
+    "deployment_env": "production",
+    "deployment_status": "SUCCESS",
+    "relation_to_incident": "POST_INCIDENT",
+    "evidence_reference": "git://enterprise-org/payment-gateway/commit/2d15c77"
+  }
+]

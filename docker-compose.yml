@@ -1,0 +1,71 @@
+version: '3.8'
+
+services:
+  # PostgreSQL with pgvector extension enabled
+  db:
+    image: pgvector/pgvector:pg16
+    container_name: itops-postgres-vector
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-itops_incident_db}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d itops_incident_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - itops-network
+
+  # FastAPI Multi-Agent Incident Summariser
+  app:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    container_name: itops-incident-summariser
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "8000:8000"
+    environment:
+      APP_ENV: ${APP_ENV:-development}
+      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@db:5432/${POSTGRES_DB:-itops_incident_db}
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      GEMINI_MODEL: ${GEMINI_MODEL:-gemini-3.8-flash}
+      GEMINI_EMBEDDING_MODEL: ${GEMINI_EMBEDDING_MODEL:-models/text-embedding-004}
+      EMBEDDING_DIMENSION: 768
+      GITHUB_REPO: ${GITHUB_REPO:-enterprise-org/payment-gateway}
+      GITHUB_TOKEN: ${GITHUB_TOKEN:-}
+      GITHUB_USE_MOCK: ${GITHUB_USE_MOCK:-true}
+      GITHUB_FIXTURE_PATH: tests/fixtures/github_changes.json
+      LOG_SOURCE_TYPE: ${LOG_SOURCE_TYPE:-file}
+      LOG_FIXTURE_PATH: tests/fixtures/incident_logs.json
+      MAX_WORKFLOW_STEPS: ${MAX_WORKFLOW_STEPS:-12}
+      AGENT_TIMEOUT_SECONDS: ${AGENT_TIMEOUT_SECONDS:-30}
+      LANGFUSE_ENABLED: ${LANGFUSE_ENABLED:-false}
+      LANGFUSE_PUBLIC_KEY: ${LANGFUSE_PUBLIC_KEY:-}
+      LANGFUSE_SECRET_KEY: ${LANGFUSE_SECRET_KEY:-}
+      LANGFUSE_HOST: ${LANGFUSE_HOST:-https://cloud.langfuse.com}
+      OTEL_ENABLED: ${OTEL_ENABLED:-false}
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    networks:
+      - itops-network
+
+volumes:
+  postgres_data:
+    driver: local
+
+networks:
+  itops-network:
+    driver: bridge

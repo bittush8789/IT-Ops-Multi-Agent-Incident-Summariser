@@ -1,0 +1,42 @@
+[
+  {
+    "timestamp": "2026-10-15T10:01:10Z",
+    "event_type": "DEPLOYMENT",
+    "source": "ChangeAnalyst",
+    "description": "Commit 8f92bd3 deployed reducing DB pool acquisition timeout from 60s to 5s",
+    "evidence_reference": "git://enterprise-org/payment-gateway/commit/8f92bd3",
+    "is_inferred": false
+  },
+  {
+    "timestamp": "2026-10-15T10:04:00Z",
+    "event_type": "DEPLOYMENT",
+    "source": "ChangeAnalyst",
+    "description": "Replica count scaled up to 12 pods (commit 4b71ae9)",
+    "evidence_reference": "git://enterprise-org/payment-gateway/commit/4b71ae9",
+    "is_inferred": false
+  },
+  {
+    "timestamp": "2026-10-15T10:07:22Z",
+    "event_type": "ERROR_SURGE",
+    "source": "LogAnalyst",
+    "description": "First ConnectionPoolTimeoutException observed in payment-gateway logs",
+    "evidence_reference": "incident_logs.json:L22",
+    "is_inferred": false
+  },
+  {
+    "timestamp": "2026-10-15T10:08:14Z",
+    "event_type": "ALERT",
+    "source": "LogAnalyst",
+    "description": "HTTP 500 Internal Server Error: Database connection refused on pool acquire",
+    "evidence_reference": "incident_logs.json:L31",
+    "is_inferred": false
+  },
+  {
+    "timestamp": "2026-10-15T10:15:30Z",
+    "event_type": "MITIGATION",
+    "source": "LogAnalyst",
+    "description": "Circuit breaker opened on payment-gateway to protect upstream database",
+    "evidence_reference": "incident_logs.json:L48",
+    "is_inferred": false
+  }
+]

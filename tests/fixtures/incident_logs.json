@@ -1,0 +1,68 @@
+[
+  {
+    "timestamp": "2026-10-15T09:48:12Z",
+    "service": "payment-gateway",
+    "level": "INFO",
+    "message": "Routine health check passed. Active pool connections: 18/60.",
+    "endpoint": "/health",
+    "evidence_reference": "incident_logs.json:L2"
+  },
+  {
+    "timestamp": "2026-10-15T10:02:45Z",
+    "service": "payment-gateway",
+    "level": "INFO",
+    "message": "Deployment webhook received: deploy-prod-v2.4.1 initialized.",
+    "evidence_reference": "incident_logs.json:L10"
+  },
+  {
+    "timestamp": "2026-10-15T10:05:01Z",
+    "service": "payment-gateway",
+    "level": "WARN",
+    "message": "Database pool wait queue rising: 12 requests waiting for connection.",
+    "evidence_reference": "incident_logs.json:L16"
+  },
+  {
+    "timestamp": "2026-10-15T10:07:22Z",
+    "service": "payment-gateway",
+    "level": "ERROR",
+    "http_status": 504,
+    "error_type": "TIMEOUT",
+    "message": "ConnectionPoolTimeoutException: Timed out waiting for pooled connection after 5000ms",
+    "exception_class": "ConnectionPoolTimeoutException",
+    "endpoint": "/api/v1/checkout",
+    "evidence_reference": "incident_logs.json:L22"
+  },
+  {
+    "timestamp": "2026-10-15T10:08:14Z",
+    "service": "payment-gateway",
+    "level": "FATAL",
+    "http_status": 500,
+    "error_type": "HTTP_5XX",
+    "message": "InternalServerError: Unable to persist transaction tx_99214. Connection refused on pool acquire.",
+    "exception_class": "DatabaseConnectionExhausted",
+    "endpoint": "/api/v1/checkout",
+    "evidence_reference": "incident_logs.json:L31"
+  },
+  {
+    "timestamp": "2026-10-15T10:12:00Z",
+    "service": "payment-gateway",
+    "level": "ERROR",
+    "http_status": 504,
+    "error_type": "TIMEOUT",
+    "message": "ConnectionPoolTimeoutException: 85 checkout operations aborted due to pool timeout.",
+    "exception_class": "ConnectionPoolTimeoutException",
+    "endpoint": "/api/v1/checkout",
+    "evidence_reference": "incident_logs.json:L40"
+  },
+  {
+    "timestamp": "2026-10-15T10:15:30Z",
+    "service": "payment-gateway",
+    "level": "ERROR",
+    "http_status": 503,
+    "error_type": "RESOURCE_EXHAUSTION",
+    "message": "CircuitBreakerOpen: payment-gateway tripped circuit breaker for upstream database",
+    "exception_class": "CircuitBreakerOpenException",
+    "endpoint": "/api/v1/refund",
+    "evidence_reference": "incident_logs.json:L48"
+  }
+]

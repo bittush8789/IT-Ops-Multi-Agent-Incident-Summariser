@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>IT-Ops Multi-Agent Incident Summariser</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+  <!-- Header / Navigation -->
+  <header class="app-header">
+    <div class="brand-container">
+      <div class="brand-icon">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+        </svg>
+      </div>
+      <div>
+        <h1 class="brand-title">IT-Ops Multi-Agent Incident Summariser</h1>
+        <p class="brand-subtitle">Autonomous SRE Investigation & Post-Incident Review Platform</p>
+      </div>
+    </div>
+    <div class="header-actions">
+      <span class="system-badge" id="systemStatus">
+        <span class="pulse-indicator"></span> System Online
+      </span>
+      <button class="btn btn-primary" id="btnOpenCreateModal">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="12" y1="5" x2="12" y2="19"></line>
+          <line x1="5" y1="12" x2="19" y2="12"></line>
+        </svg>
+        Declare Incident
+      </button>
+    </div>
+  </header>
+
+  <!-- Navigation Tabs -->
+  <nav class="sub-nav">
+    <div class="nav-container">
+      <button class="nav-tab active" data-view="dashboardView" id="tabDashboard">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+        Command Center
+      </button>
+      <button class="nav-tab" data-view="detailsView" id="tabDetails" disabled>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+        Incident Investigation
+      </button>
+      <button class="nav-tab" data-view="reportView" id="tabReport" disabled>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+        Post-Incident Review (PIR)
+      </button>
+    </div>
+  </nav>
+
+  <!-- Main Content Views -->
+  <main class="main-container">
+
+    <!-- Global Alert / Notification Toast -->
+    <div id="alertContainer" class="alert-container"></div>
+
+    <!-- VIEW 1: DASHBOARD VIEW -->
+    <section id="dashboardView" class="view-panel active">
+      <!-- KPI Stats Bar -->
+      <div class="metrics-grid">
+        <div class="metric-card">
+          <div class="metric-header">
+            <span class="metric-label">Total Incidents</span>
+            <div class="metric-icon blue"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg></div>
+          </div>
+          <div class="metric-value" id="kpiTotal">0</div>
+          <div class="metric-subtext">All logged incident records</div>
+        </div>
+
+        <div class="metric-card">
+          <div class="metric-header">
+            <span class="metric-label">Open / Active</span>
+            <div class="metric-icon yellow"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg></div>
+          </div>
+          <div class="metric-value" id="kpiOpen">0</div>
+          <div class="metric-subtext">Active triage & mitigation</div>
+        </div>
+
+        <div class="metric-card">
+          <div class="metric-header">
+            <span class="metric-label">Critical Tier</span>
+            <div class="metric-icon red"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg></div>
+          </div>
+          <div class="metric-value" id="kpiCritical">0</div>
+          <div class="metric-subtext">P0 severity alerts</div>
+        </div>
+
+        <div class="metric-card">
+          <div class="metric-header">
+            <span class="metric-label">Investigated by AI</span>
+            <div class="metric-icon purple"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg></div>
+          </div>
+          <div class="metric-value" id="kpiInvestigated">0</div>
+          <div class="metric-subtext">Automated PIR generated</div>
+        </div>
+      </div>
+
+      <!-- Filters & Actions -->
+      <div class="card table-card">
+        <div class="card-header">
+          <div>
+            <h2 class="card-title">Incident Queue</h2>
+            <p class="card-description">Live operational incidents requiring multi-agent diagnosis and timeline synthesis.</p>
+          </div>
+          <div class="table-toolbar">
+            <div class="filter-group">
+              <select id="filterSeverity" class="form-select">
+                <option value="">All Severities</option>
+                <option value="CRITICAL">Critical</option>
+                <option value="HIGH">High</option>
+                <option value="MEDIUM">Medium</option>
+                <option value="LOW">Low</option>
+              </select>
+              <select id="filterStatus" class="form-select">
+                <option value="">All Statuses</option>
+                <option value="OPEN">Open</option>
+                <option value="INVESTIGATING">Investigating</option>
+                <option value="MITIGATED">Mitigated</option>
+                <option value="RESOLVED">Resolved</option>
+              </select>
+            </div>
+            <button class="btn btn-secondary" id="btnRefreshIncidents">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
+              Refresh
+            </button>
+          </div>
+        </div>
+
+        <div class="table-container">
+          <table class="data-table" id="incidentsTable">
+            <thead>
+              <tr>
+                <th>Key / ID</th>
+                <th>Title</th>
+                <th>Affected Service</th>
+                <th>Severity</th>
+                <th>Status</th>
+                <th>Started At</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="incidentsTableBody">
+              <!-- Dynamically populated rows -->
+            </tbody>
+          </table>
+          <div id="incidentsEmptyState" class="empty-state" style="display: none;">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+            <p>No incidents match the active filter criteria.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- VIEW 2: INCIDENT DETAILS & INVESTIGATION WORKFLOW -->
+    <section id="detailsView" class="view-panel">
+      <!-- Incident Detail Header Banner -->
+      <div class="incident-banner card">
+        <div class="banner-main">
+          <div class="banner-title-row">
+            <span class="badge" id="detailSeverity">HIGH</span>
+            <span class="badge" id="detailStatus">OPEN</span>
+            <span class="incident-key" id="detailKey">INC-2026-1001</span>
+          </div>
+          <h2 class="incident-headline" id="detailTitle">Payment Gateway Connection Pool Starvation</h2>
+          <p class="incident-meta-text">
+            <strong>Service:</strong> <span id="detailService">payment-gateway</span> &bull; 
+            <strong>Reported:</strong> <span id="detailStarted">2026-10-15 10:14 UTC</span> &bull;
+            <strong>ID:</strong> #<span id="detailId">1</span>
+          </p>
+          <p class="incident-desc" id="detailDescription">Loading description...</p>
+        </div>
+        <div class="banner-actions">
+          <button class="btn btn-primary btn-lg" id="btnTriggerInvestigation">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+            Run Multi-Agent Investigation
+          </button>
+          <button class="btn btn-secondary" id="btnViewReportDirect">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
+            View Report
+          </button>
+        </div>
+      </div>
+
+      <!-- Investigation Stepper Progress -->
+      <div class="card stepper-card">
+        <h3 class="card-title" style="margin-bottom: 1rem;">Multi-Agent LangGraph Orchestration</h3>
+        <div class="agent-stepper">
+          <div class="step-item" id="stepSupervisor">
+            <div class="step-circle">1</div>
+            <div class="step-content">
+              <div class="step-name">Supervisor Agent</div>
+              <div class="step-status" id="statusSupervisor">Pending</div>
+            </div>
+          </div>
+          <div class="step-line"></div>
+          <div class="step-item" id="stepLogAnalyst">
+            <div class="step-circle">2</div>
+            <div class="step-content">
+              <div class="step-name">Log Analyst</div>
+              <div class="step-status" id="statusLogAnalyst">Pending</div>
+            </div>
+          </div>
+          <div class="step-line"></div>
+          <div class="step-item" id="stepChangeAnalyst">
+            <div class="step-circle">3</div>
+            <div class="step-content">
+              <div class="step-name">Change Analyst</div>
+              <div class="step-status" id="statusChangeAnalyst">Pending</div>
+            </div>
+          </div>
+          <div class="step-line"></div>
+          <div class="step-item" id="stepRAG">
+            <div class="step-circle">4</div>
+            <div class="step-content">
+              <div class="step-name">pgvector RAG</div>
+              <div class="step-status" id="statusRAG">Pending</div>
+            </div>
+          </div>
+          <div class="step-line"></div>
+          <div class="step-item" id="stepReportWriter">
+            <div class="step-circle">5</div>
+            <div class="step-content">
+              <div class="step-name">Report Writer</div>
+              <div class="step-status" id="statusReportWriter">Pending</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Multi-Agent Evidence Grid -->
+      <div class="two-column-grid">
+        <!-- Log Analyst Findings -->
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+              Log Analyst Findings
+            </h3>
+            <span class="badge" id="logAnalystBadge">NOT_RUN</span>
+          </div>
+          <div class="evidence-body" id="logAnalystContent">
+            <p class="text-muted">Initiate investigation to extract error groups and 5xx anomalies.</p>
+          </div>
+        </div>
+
+        <!-- Change Analyst Findings -->
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="18" r="3"></circle><circle cx="6" cy="6" r="3"></circle><path d="M13 6h3a2 2 0 0 1 2 2v7"></path><line x1="6" y1="9" x2="6" y2="21"></line></svg>
+              Change Analyst Findings
+            </h3>
+            <span class="badge" id="changeAnalystBadge">NOT_RUN</span>
+          </div>
+          <div class="evidence-body" id="changeAnalystContent">
+            <p class="text-muted">Initiate investigation to correlate recent commits and deployments.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Historical Precedents & RAG Matches -->
+      <div class="card" style="margin-top: 1.5rem;">
+        <div class="card-header">
+          <h3 class="card-title">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 2 7 12 12 22 7 12 2"></polygon><polyline points="2 17 12 22 22 17"></polyline><polyline points="2 12 12 17 22 12"></polyline></svg>
+            Historical Incident Knowledge (pgvector RAG)
+          </h3>
+          <span class="badge badge-purple" id="ragMatchCountBadge">0 matches</span>
+        </div>
+        <div id="ragMatchesContent">
+          <p class="text-muted">Similar past incident resolutions will be fetched during investigation.</p>
+        </div>
+      </div>
+
+      <!-- Chronological Incident Timeline -->
+      <div class="card" style="margin-top: 1.5rem;">
+        <div class="card-header">
+          <div>
+            <h3 class="card-title">Verified Chronological Timeline</h3>
+            <p class="card-description">Evidence-backed sequence of observed alerts, deployments, and log spikes.</p>
+          </div>
+          <button class="btn btn-secondary btn-sm" id="btnRefreshTimeline">Refresh Timeline</button>
+        </div>
+        <div class="timeline-wrapper" id="timelineContainer">
+          <p class="text-muted">Timeline will populate once agents complete evidence synthesis.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- VIEW 3: INVESTIGATION REPORT & POST-INCIDENT REVIEW -->
+    <section id="reportView" class="view-panel">
+      <!-- Report Header -->
+      <div class="report-header-card card">
+        <div class="report-header-top">
+          <div>
+            <span class="badge badge-green" id="reportStatusBadge">COMPLETED</span>
+            <h2 class="report-main-title" id="reportTitle">Post-Incident Review: Payment Gateway Incident</h2>
+            <p class="report-subtitle" id="reportMeta">Incident Key: INC-2026-1001 &bull; Generated by Multi-Agent Report Writer</p>
+          </div>
+          <div class="report-actions">
+            <button class="btn btn-secondary" id="btnRegenerateReport">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
+              Regenerate Report
+            </button>
+            <button class="btn btn-primary" onclick="window.print()">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
+              Print / Export PIR
+            </button>
+          </div>
+        </div>
+
+        <!-- Failure or Partial Warning Banner -->
+        <div id="reportWarningBanner" class="warning-banner" style="display: none;">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+          <div id="reportWarningText">Notice: Investigation completed partially. Certain agent findings were unavailable.</div>
+        </div>
+      </div>
+
+      <!-- Executive Briefing & Impact Summary -->
+      <div class="two-column-grid" style="margin-top: 1.5rem;">
+        <div class="card">
+          <h3 class="card-title">Executive Summary</h3>
+          <p class="report-text" id="reportExecSummary">Loading executive summary...</p>
+        </div>
+        <div class="card">
+          <h3 class="card-title">Customer & Business Impact</h3>
+          <p class="report-text" id="reportImpactSummary">Loading impact summary...</p>
+        </div>
+      </div>
+
+      <!-- Root Cause Hypotheses Deep-Dive -->
+      <div class="card" style="margin-top: 1.5rem;">
+        <h3 class="card-title">Evaluated Root-Cause Hypotheses</h3>
+        <p class="card-description">Hypotheses systematically weighed against verified log errors and deployment records.</p>
+        <div id="reportRootCausesContainer" class="root-causes-list">
+          <!-- Populated dynamically -->
+        </div>
+      </div>
+
+      <!-- Timeline Table in PIR -->
+      <div class="card" style="margin-top: 1.5rem;">
+        <h3 class="card-title">Official Incident Sequence (PIR)</h3>
+        <div class="table-container">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Timestamp (UTC)</th>
+                <th>Type</th>
+                <th>Source</th>
+                <th>Event Narrative</th>
+                <th>Evidence Reference</th>
+              </tr>
+            </thead>
+            <tbody id="reportTimelineBody">
+              <!-- Populated dynamically -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Preventative & Remediation Action Items -->
+      <div class="card" style="margin-top: 1.5rem;">
+        <h3 class="card-title">Preventative Engineering & Follow-up Actions</h3>
+        <p class="card-description">Concrete, assigned action items to prevent incident recurrence.</p>
+        <div class="action-items-grid" id="reportRecommendationsContainer">
+          <!-- Populated dynamically -->
+        </div>
+      </div>
+
+      <!-- Confidence & Transparency Notes -->
+      <div class="card" style="margin-top: 1.5rem; margin-bottom: 3rem;">
+        <h3 class="card-title">Evidence Confidence & Gaps</h3>
+        <p class="report-text text-muted" id="reportConfidenceNotes">Loading confidence notes...</p>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- MODAL: Declare Incident -->
+  <div class="modal-backdrop" id="modalCreateIncident">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3 class="modal-title">Declare New Incident</h3>
+        <button class="modal-close" id="btnCloseCreateModal">&times;</button>
+      </div>
+      <form id="formCreateIncident">
+        <div class="form-group">
+          <label class="form-label" for="inpTitle">Incident Title *</label>
+          <input type="text" id="inpTitle" class="form-input" placeholder="e.g. Database connection pool starvation in payment service" required minlength="5">
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label" for="inpService">Service Name *</label>
+            <input type="text" id="inpService" class="form-input" placeholder="e.g. payment-gateway" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="inpSeverity">Severity *</label>
+            <select id="inpSeverity" class="form-select" required>
+              <option value="CRITICAL">Critical (P0)</option>
+              <option value="HIGH" selected>High (P1)</option>
+              <option value="MEDIUM">Medium (P2)</option>
+              <option value="LOW">Low (P3)</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="inpDescription">Incident Problem Statement *</label>
+          <textarea id="inpDescription" class="form-textarea" rows="4" placeholder="Detail observed symptoms, user impact, affected endpoints..." required minlength="10"></textarea>
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn btn-secondary" id="btnCancelCreateModal">Cancel</button>
+          <button type="submit" class="btn btn-primary" id="btnSubmitCreate">Create Incident</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="/static/js/app.js"></script>
+</body>
+</html>
